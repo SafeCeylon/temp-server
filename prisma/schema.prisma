@@ -27,6 +27,8 @@ enum UserRole {
 model User {
   id                      String                 @id @default(cuid())
   name                    String?
+  nic                     String?
+  mobileNumber            String?
   email                   String?                @unique
   emailVerified           DateTime?              @map("email_verified")
   image                   String?

@@ -15,19 +15,19 @@ const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
 // Middleware
-app.use(
-  cors({
-    origin: 'http://localhost:3000',
-    credentials: true,
-  }),
-);
+// app.use(
+//   cors({
+//     origin: 'http://localhost:3000',
+//     credentials: true,
+//   }),
+// );
 app.use(express.json());
 
 const PORT = process.env.PORT || 4000;
 
 // User Signup
 app.post('/signup', async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password, nic, mobileNumber} = req.body;
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -37,7 +37,8 @@ app.post('/signup', async (req, res) => {
         name,
         email,
         password: hashedPassword,
-        role,
+        nic,
+        mobileNumber
       },
     });
 
