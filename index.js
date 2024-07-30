@@ -27,57 +27,71 @@ const PORT = process.env.PORT || 4000;
 
 // User Signup
 app.post('/signup', async (req, res) => {
-  const { name, email, password, nic, mobileNumber} = req.body;
+  const { name:name, email, password, nic, mobileNumber, address} = req.body;
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        nic,
-        mobileNumber
-      },
-    });
+    const oldUser = await prisma.user.findUnique({ where: { email } });
 
-    const token = jwt.sign({ userId: newUser.id }, JWT_SECRET, {
-      expiresIn: '1h',
-    });
-
-    res.status(201).json({ token, user: newUser });
+    if (oldUser) {
+      return res.send({status: 400, message: 'User already exists'});
+    } else {
+      try {
+        const newUser = await prisma.user.create({
+          data: {
+            name,
+            email,
+            password: hashedPassword,
+            nic,
+            address,
+            mobileNumber
+          },
+        });
+        res.send({status: 200, message: 'User created successfully'});
+      } catch (error) {
+        console.error(error);
+        res.send({status: 500, message: 'Internal server error'});
+      }
+    } 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.send({status: 500, message: 'Internal server error'});
   }
 });
 
 // User Login
 app.post('/login', async (req, res) => {
+  console.log(req.body);
   const { email, password } = req.body;
+  const oldUser = await prisma.user.findUnique({ where: { email } });
 
-  try {
-    const user = await prisma.user.findUnique({ where: { email } });
+  if (!oldUser) {
+    return res.send({status: 404, message: 'User does not exist'});
+  }
 
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
-
-    const isValidPassword = await bcrypt.compare(password, user.password);
-
-    if (!isValidPassword) {
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
-
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, {
+  if (await bcrypt.compare(password, oldUser.password)) {
+    const token = jwt.sign({ userId: oldUser.id }, JWT_SECRET, {
       expiresIn: '1h',
     });
 
-    res.json({ token, user });
+    return res.send({status: 200, message: 'User logged in successfully', token});
+  } else {
+    return res.send({status: 405, message: 'Invalid credentials'});
+  }
+});
+
+app.post('/userdata', async (req, res) => {
+  const {token} = req.body;
+  try {
+    const user = jwt.verify(token, JWT_SECRET);
+    const userId = user.userId;
+
+    const userData = await prisma.user.findUnique({ where: { id: userId } });
+    res.send({status: 200, message: 'User data fetched successfully', data: userData});
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.send({status: 500, message: 'Internal server error'});
   }
 });
 

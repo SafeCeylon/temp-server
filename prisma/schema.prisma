@@ -29,6 +29,7 @@ model User {
   name                    String?
   nic                     String?
   mobileNumber            String?
+  address                 String?
   email                   String?                @unique
   emailVerified           DateTime?              @map("email_verified")
   image                   String?
