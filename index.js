@@ -27,7 +27,7 @@ const PORT = process.env.PORT || 4000;
 
 // User Signup
 app.post('/signup', async (req, res) => {
-  const { name:name, email, password, nic, mobileNumber} = req.body;
+  const { name:name, email, password, nic, mobileNumber, address} = req.body;
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -44,6 +44,7 @@ app.post('/signup', async (req, res) => {
             email,
             password: hashedPassword,
             nic,
+            address,
             mobileNumber
           },
         });
